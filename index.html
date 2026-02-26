@@ -274,8 +274,24 @@
         .ladder-table th:first-child, .ladder-table td:first-child {
             text-align: left;
         }
+        .ladder-table td:last-child {
+            text-align: center;
+            cursor: pointer;
+        }
         .highlight-slice {
             background: #234f6b50;
+        }
+        .bought-row {
+            background: #1f4a3c60;
+            opacity: 0.8;
+            text-decoration: line-through 1px #aaffdd;
+        }
+        .bought-row td:last-child {
+            color: #80ffb8;
+            font-weight: 700;
+        }
+        .bought-row:hover {
+            opacity: 1;
         }
         .rebalance-bar {
             display: flex;
@@ -311,6 +327,24 @@
             padding: 1.2rem;
             margin-top: 1rem;
         }
+        .bought-indicator {
+            display: inline-block;
+            background: #1f5a4a;
+            color: white;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+        .level-action {
+            font-size: 0.85rem;
+            background: #2c3d70;
+            border: none;
+            color: white;
+            border-radius: 30px;
+            padding: 0.2rem 1rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -318,7 +352,7 @@
     <div class="header">
         <div class="title">
             <h1>🧠 ABRAHAM ADAPTIVE P2P v1 · GHS</h1>
-            <div style="color:#aaccff;">USDT/GHS spread specialist · capital first</div>
+            <div style="color:#aaccff;">USDT/GHS spread specialist · mark bought levels</div>
         </div>
         <div class="badge" id="spreadBadge">spread: 2.1% · 7 levels</div>
     </div>
@@ -388,7 +422,7 @@
             <span id="spreadIntelligence">spread 2.21% → 7 levels</span>
         </div>
         <table class="ladder-table" id="ladderTable">
-            <thead><tr><th>price (₵)</th><th>alloc %</th><th>amount (₵)</th><th>cumulative</th><th>premium</th></tr></thead>
+            <thead><tr><th>price (₵)</th><th>alloc %</th><th>amount (₵)</th><th>cumulative</th><th>premium</th><th>action / status</th></tr></thead>
             <tbody id="ladderBody"></tbody>
         </table>
 
@@ -396,6 +430,10 @@
             <button id="refreshBtn">⟳ refresh engine</button>
             <button class="reset-btn" id="resetBtn">⟲ reset to Ghana default</button>
             <span style="margin-left:auto;" id="dynamicReserve">💧 dry reserve: 2,800 ₵</span>
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+            <span style="background: #1f4a3c; padding:0.3rem 1.5rem; border-radius:30px;">✔️ Click on "mark bought" to track filled levels</span>
+            <span style="background: #3f3555; padding:0.3rem 1.5rem; border-radius:30px;" id="boughtCount">0 levels marked</span>
         </div>
         <!-- simulation output -->
         <div class="simulation-box" id="midpointSim">
@@ -433,6 +471,7 @@
     const refreshBtn = document.getElementById('refreshBtn');
     const resetBtn = document.getElementById('resetBtn');
     const midpointSimDiv = document.getElementById('midpointSim');
+    const boughtCountSpan = document.getElementById('boughtCount');
 
     // premium color cells
     const premL1 = document.getElementById('premL1');
@@ -446,8 +485,12 @@
     let microCluster = false;
     let liquidityShock = false;
 
+    // bought levels storage (set of indices)
+    let boughtLevels = new Set(); // stores index (0-based)
+
     // localStorage key
     const STORAGE_KEY = 'abrahamP2PEngineV1';
+    const BOUGHT_KEY = 'abrahamBoughtLevels';
 
     // ---- helpers ----
     function formatNumber(num, decimals=2) {
@@ -474,6 +517,35 @@
         return 'yellow';
     }
 
+    // save bought levels to localStorage
+    function saveBoughtLevels() {
+        localStorage.setItem(BOUGHT_KEY, JSON.stringify(Array.from(boughtLevels)));
+    }
+
+    // load bought levels
+    function loadBoughtLevels() {
+        const saved = localStorage.getItem(BOUGHT_KEY);
+        if (saved) {
+            try {
+                const arr = JSON.parse(saved);
+                boughtLevels = new Set(arr);
+            } catch (e) { boughtLevels = new Set(); }
+        } else {
+            boughtLevels = new Set();
+        }
+    }
+
+    // toggle buy status for a level index
+    function toggleBought(index) {
+        if (boughtLevels.has(index)) {
+            boughtLevels.delete(index);
+        } else {
+            boughtLevels.add(index);
+        }
+        saveBoughtLevels();
+        computeEngine(); // re-render
+    }
+
     // main engine
     function computeEngine() {
         let min = parseFloat(minInput.value) || 11.30;
@@ -486,7 +558,6 @@
 
         const rawSpread = computeSpread(min, max);
         let levels = getLevelsFromSpread(rawSpread);
-        // override if microCluster? we keep same levels but cluster more aggressively near min. handled by weights.
         // spread display
         spreadPercentSpan.innerText = rawSpread.toFixed(2) + '%';
         spreadBadge.innerText = `spread: ${rawSpread.toFixed(1)}% · ${levels} levels`;
@@ -519,8 +590,6 @@
         }
         const rawWeights = [];
         for (let i = 0; i < levels; i++) {
-            // reversed index? we want later slices heavier, but micro cluster wants first small, last not huge
-            // keep same logic: weight grows with i+1
             rawWeights.push(Math.pow(i+1, p));
         }
         if (liquidityShock) {
@@ -603,22 +672,39 @@
         else emotionText = '✅ reserve healthy · allocation balanced';
         emotionMsg.innerText = emotionText;
 
-        // render ladder
+        // render ladder with bought marks
         let html = '';
+        let boughtCount = 0;
         for (let i=0; i<levels; i++) {
             const d = ladder[i];
             const pctCapital = (d.amount / capital * 100).toFixed(1);
             const premium = ((d.price - fair) / fair * 100).toFixed(2);
             const premiumClass = premiumColor(parseFloat(premium));
-            html += `<tr ${i===0 ? 'class=highlight-slice' : ''}>
+            const isBought = boughtLevels.has(i);
+            if (isBought) boughtCount++;
+            const rowClass = isBought ? 'bought-row' : (i === 0 ? 'highlight-slice' : '');
+            const statusText = isBought ? '✅ bought' : 'mark bought';
+            // price cell maybe strikethrough if bought (handled by css)
+            html += `<tr class="${rowClass}" data-level-index="${i}">
                 <td>${formatNumber(d.price,2)}</td>
                 <td>${pctCapital}%</td>
                 <td>${formatNumber(d.amount,1)}</td>
                 <td>${formatNumber(d.cum,1)}</td>
                 <td class="${premiumClass}">${premium}%</td>
+                <td><button class="level-action" data-index="${i}">${statusText}</button></td>
             </tr>`;
         }
         ladderBody.innerHTML = html;
+        boughtCountSpan.innerText = boughtCount + ' levels marked';
+
+        // attach click handlers to buttons
+        document.querySelectorAll('.level-action').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.dataset.index);
+                toggleBought(idx);
+            });
+        });
 
         // update premium preview cells
         if (levels >= 1) {
@@ -678,6 +764,7 @@
                 updateToggleUI();
             } catch (e) {}
         }
+        loadBoughtLevels(); // load bought marks
     }
 
     function updateToggleUI() {
@@ -693,6 +780,7 @@
     function refreshAndSave() {
         computeEngine();
         saveSettings();
+        // bought levels already saved individually
     }
 
     minInput.addEventListener('input', refreshAndSave);
@@ -724,6 +812,8 @@
         aggressionSlider.value = '0.45';
         microCluster = false;
         liquidityShock = false;
+        boughtLevels.clear();
+        saveBoughtLevels();
         updateToggleUI();
         refreshAndSave();
     });
