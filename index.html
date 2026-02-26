@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Abraham Adaptive P2P Engine v1 · Ghana USDT/GHS</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: linear-gradient(145deg, #0a0f1e 0%, #11182f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .engine-container {
+            max-width: 1600px;
+            width: 100%;
+            background: rgba(18, 24, 45, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 170, 0.15);
+            border-radius: 2.5rem;
+            padding: 2rem;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(72, 255, 180, 0.1) inset;
+            color: #eef5ff;
+        }
+        /* header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .title h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #aaffdd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+        .badge {
+            background: #1d2a45;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            border: 1px solid #3affb3;
+            color: #ccffe6;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 0 10px #00cc8840;
+        }
+        .spread-indicator {
+            background: #101b30;
+            border-radius: 30px;
+            padding: 0.5rem 1.8rem;
+            border-left: 5px solid #ffd966;
+            font-weight: 600;
+        }
+        /* grid layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 0.9fr;
+            gap: 1.8rem;
+            margin-bottom: 2rem;
+        }
+        /* left panel: core controls */
+        .core-panel {
+            background: #0e142acc;
+            border-radius: 2rem;
+            padding: 1.8rem;
+            border: 1px solid #2d3f6b;
+        }
+        .range-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 1.5rem 0 1rem;
+        }
+        .input-group {
+            background: #1b2542;
+            border-radius: 1.5rem;
+            padding: 0.6rem 1.2rem;
+            display: flex;
+            align-items: center;
+            border: 1px solid #3e5680;
+            flex: 1 1 180px;
+        }
+        .input-group span {
+            color: #9bb0dd;
+            margin-right: 8px;
+            font-weight: 500;
+        }
+        .input-group input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 1.2rem;
+            width: 100%;
+            outline: none;
+        }
+        .capital-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin: 1.5rem 0 0.8rem;
+            flex-wrap: wrap;
+        }
+        .spread-metric {
+            background: #212e50;
+            border-radius: 2rem;
+            padding: 0.7rem 2rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffdb8e;
+        }
+        .toggle-row {
+            display: flex;
+            gap: 1.8rem;
+            align-items: center;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        .toggle-btn {
+            background: #1a2748;
+            border: 2px solid #394e7a;
+            color: #b3c9ff;
+            padding: 0.7rem 1.8rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+            user-select: none;
+        }
+        .toggle-btn.active {
+            background: #00a878;
+            border-color: #8affd2;
+            color: white;
+            box-shadow: 0 0 15px #00dd99;
+        }
+        .toggle-btn.warning-mode {
+            border-color: #ffaa33;
+        }
+        .slider-block {
+            margin: 1.5rem 0;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            color: #b5c9ff;
+        }
+        input[type=range] {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, #23408e, #70d6b0);
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            border: 2px solid #1c9460;
+            cursor: pointer;
+        }
+        .fair-value {
+            display: flex;
+            gap: 1rem;
+            background: #0d1a2f;
+            border-radius: 1.5rem;
+            padding: 1rem 1.5rem;
+            align-items: center;
+            border: 1px dashed #5f8aff;
+        }
+        /* right panel: intelligence hub */
+        .intel-panel {
+            background: #0f162bd9;
+            border-radius: 2rem;
+            padding: 1.8rem;
+            border: 1px solid #465e96;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .metric-card {
+            background: #1d2749;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            border-bottom: 4px solid;
+        }
+        .metric-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ab3f0;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .warning-badge {
+            background: #ffd96630;
+            color: #ffdb8e;
+            border-radius: 30px;
+            padding: 0.3rem 1rem;
+            font-size: 0.85rem;
+            border: 1px solid #f0b853;
+        }
+        .emotion-guard {
+            background: #221e3a;
+            border-left: 8px solid #ff7070;
+            border-radius: 1.2rem;
+            padding: 1rem 1.2rem;
+            margin: 1.5rem 0;
+            font-weight: 500;
+        }
+        .premium-table {
+            width: 100%;
+            margin: 1.2rem 0;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .premium-table th {
+            text-align: left;
+            color: #b6ceff;
+            font-weight: 500;
+            padding: 0.4rem 0;
+        }
+        .premium-table td {
+            padding: 0.4rem 0.2rem;
+        }
+        .green { color: #62de9a; font-weight: 600; }
+        .yellow { color: #f9d371; font-weight: 600; }
+        .red { color: #ff8a8a; font-weight: 600; }
+        .ladder-wrapper {
+            margin-top: 2.5rem;
+            background: #0d1530dd;
+            border-radius: 2rem;
+            padding: 1.8rem;
+            border: 1px solid #3a5285;
+        }
+        .ladder-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        .ladder-table th {
+            text-align: right;
+            padding: 1rem 0.6rem;
+            background: #1f2d51;
+            color: #b5d0ff;
+            font-weight: 500;
+        }
+        .ladder-table td {
+            text-align: right;
+            padding: 0.8rem 0.6rem;
+            border-bottom: 1px solid #283a62;
+        }
+        .ladder-table th:first-child, .ladder-table td:first-child {
+            text-align: left;
+        }
+        .highlight-slice {
+            background: #234f6b50;
+        }
+        .rebalance-bar {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            background: #208a6e;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 1rem 2.5rem;
+            border-radius: 3rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid #69e6b8;
+            box-shadow: 0 8px 14px #00000066;
+        }
+        button:hover {
+            background: #2abf8f;
+            transform: scale(1.02);
+        }
+        .reset-btn {
+            background: #3f3f6b;
+            border-color: #9a9af0;
+        }
+        .simulation-box {
+            background: #1a2546;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="engine-container" id="abrahamEngine">
+    <div class="header">
+        <div class="title">
+            <h1>🧠 ABRAHAM ADAPTIVE P2P v1 · GHS</h1>
+            <div style="color:#aaccff;">USDT/GHS spread specialist · capital first</div>
+        </div>
+        <div class="badge" id="spreadBadge">spread: 2.1% · 7 levels</div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard-grid">
+        <!-- LEFT CORE -->
+        <div class="core-panel">
+            <div style="font-size:1.5rem; font-weight:600;">⚙️ core range</div>
+            <div class="range-row">
+                <div class="input-group"><span>min ₵</span><input type="number" id="minPrice" step="0.01" value="11.30"></div>
+                <div class="input-group"><span>max ₵</span><input type="number" id="maxPrice" step="0.01" value="11.55"></div>
+                <div class="input-group"><span>fair ₵</span><input type="number" id="fairValue" step="0.01" value="11.40" placeholder="external"></div>
+            </div>
+            <div class="capital-row">
+                <div class="input-group" style="flex:2;"><span>capital ₵</span><input type="number" id="capital" step="100" value="10000"></div>
+                <div class="spread-metric" id="spreadPercent">2.21%</div>
+            </div>
+            <!-- toggles -->
+            <div class="toggle-row">
+                <span class="toggle-btn" id="microClusterToggle">🌀 micro-cluster OFF</span>
+                <span class="toggle-btn" id="liquidityShockToggle">⚡ liquidity shock OFF</span>
+                <span style="color:#aabbff;">aggression</span>
+            </div>
+            <div class="slider-block">
+                <div class="slider-label"><span>⚖️ base aggression</span> <span id="aggroValue">0.45</span></div>
+                <input type="range" id="aggression" min="0.1" max="0.9" value="0.45" step="0.01">
+            </div>
+            <div class="fair-value">
+                <span>💹 premium edge (vs fair)</span>
+                <span id="avgPremium">+0.4%</span>
+                <span class="warning-badge" id="efficiencyScore">efficiency 78</span>
+            </div>
+        </div>
+
+        <!-- RIGHT INTEL HUB -->
+        <div class="intel-panel">
+            <div style="display:flex; justify-content:space-between;">
+                <span style="font-weight:700;">📊 capital efficiency</span>
+                <span id="capitalEfficiencyNum">82/100</span>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card" style="border-color:#3bc48a;"><span class="metric-title">reserve %</span><span class="metric-value" id="reservePercent">28%</span></div>
+                <div class="metric-card" style="border-color:#f4c542;"><span class="metric-title">avg entry</span><span class="metric-value" id="avgEntry">11.39</span></div>
+                <div class="metric-card" style="border-color:#6d8cff;"><span class="metric-title">break-even</span><span class="metric-value" id="breakEven">11.33</span></div>
+                <div class="metric-card" style="border-color:#ff7777;"><span class="metric-title">ROI at mid</span><span class="metric-value" id="roiMid">+0.8%</span></div>
+            </div>
+            <!-- emotion guard -->
+            <div class="emotion-guard" id="emotionMsg">✅ reserve healthy · allocation balanced</div>
+            <!-- premium per level preview (short) -->
+            <table class="premium-table">
+                <tr><th>level</th><th>rate</th><th>premium</th></tr>
+                <tr><td>1</td><td id="premL1">11.30</td><td id="color1" class="green">-0.9%</td></tr>
+                <tr><td>3</td><td id="premL3">11.41</td><td id="color3" class="yellow">+0.1%</td></tr>
+                <tr><td>5</td><td id="premL5">11.52</td><td id="color5" class="red">+1.1%</td></tr>
+            </table>
+            <div style="font-size:0.9rem; background:#00000040; padding:0.6rem; border-radius:1rem;">
+                <span>📌 micro-cluster: <span id="clusterStatus">inactive</span> · shock: <span id="shockStatus">off</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- LADDER + REBALANCE -->
+    <div class="ladder-wrapper">
+        <div style="display:flex; justify-content: space-between; margin-bottom:1rem;">
+            <span><span class="badge" style="background:#1f4172;">🧩 adaptive levels · <span id="levelCount">7</span> slices</span></span>
+            <span id="spreadIntelligence">spread 2.21% → 7 levels</span>
+        </div>
+        <table class="ladder-table" id="ladderTable">
+            <thead><tr><th>price (₵)</th><th>alloc %</th><th>amount (₵)</th><th>cumulative</th><th>premium</th></tr></thead>
+            <tbody id="ladderBody"></tbody>
+        </table>
+
+        <div class="rebalance-bar">
+            <button id="refreshBtn">⟳ refresh engine</button>
+            <button class="reset-btn" id="resetBtn">⟲ reset to Ghana default</button>
+            <span style="margin-left:auto;" id="dynamicReserve">💧 dry reserve: 2,800 ₵</span>
+        </div>
+        <!-- simulation output -->
+        <div class="simulation-box" id="midpointSim">
+            📈 if price returns to 11.42: portfolio value = 10,165 ₵ · profit +1.65% · annualized ~?? 
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // DOM elements
+    const minInput = document.getElementById('minPrice');
+    const maxInput = document.getElementById('maxPrice');
+    const fairInput = document.getElementById('fairValue');
+    const capitalInput = document.getElementById('capital');
+    const aggressionSlider = document.getElementById('aggression');
+    const aggroSpan = document.getElementById('aggroValue');
+    const spreadPercentSpan = document.getElementById('spreadPercent');
+    const spreadBadge = document.getElementById('spreadBadge');
+    const reservePercentSpan = document.getElementById('reservePercent');
+    const avgEntrySpan = document.getElementById('avgEntry');
+    const breakEvenSpan = document.getElementById('breakEven');
+    const roiMidSpan = document.getElementById('roiMid');
+    const capitalEfficiencyNum = document.getElementById('capitalEfficiencyNum');
+    const emotionMsg = document.getElementById('emotionMsg');
+    const levelCountSpan = document.getElementById('levelCount');
+    const spreadIntelSpan = document.getElementById('spreadIntelligence');
+    const ladderBody = document.getElementById('ladderBody');
+    const dynamicReserve = document.getElementById('dynamicReserve');
+    const avgPremiumSpan = document.getElementById('avgPremium');
+    const clusterStatus = document.getElementById('clusterStatus');
+    const shockStatus = document.getElementById('shockStatus');
+    const microToggle = document.getElementById('microClusterToggle');
+    const shockToggle = document.getElementById('liquidityShockToggle');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const midpointSimDiv = document.getElementById('midpointSim');
+
+    // premium color cells
+    const premL1 = document.getElementById('premL1');
+    const premL3 = document.getElementById('premL3');
+    const premL5 = document.getElementById('premL5');
+    const color1 = document.getElementById('color1');
+    const color3 = document.getElementById('color3');
+    const color5 = document.getElementById('color5');
+
+    // state toggles
+    let microCluster = false;
+    let liquidityShock = false;
+
+    // localStorage key
+    const STORAGE_KEY = 'abrahamP2PEngineV1';
+
+    // ---- helpers ----
+    function formatNumber(num, decimals=2) {
+        if (isNaN(num)) return '0';
+        return num.toFixed(decimals);
+    }
+
+    // compute spread %
+    function computeSpread(min, max) {
+        return ((max - min) / min) * 100;
+    }
+
+    // determine levels based on spread
+    function getLevelsFromSpread(spreadPct) {
+        if (spreadPct < 1.0) return 9;
+        if (spreadPct >= 1.0 && spreadPct <= 3.0) return 7;
+        return 5;  // >5%
+    }
+
+    // premium color
+    function premiumColor(premium) {
+        if (premium < -0.3) return 'green';
+        if (premium > 0.5) return 'red';
+        return 'yellow';
+    }
+
+    // main engine
+    function computeEngine() {
+        let min = parseFloat(minInput.value) || 11.30;
+        let max = parseFloat(maxInput.value) || 11.55;
+        let fair = parseFloat(fairInput.value) || 11.40;
+        let capital = parseFloat(capitalInput.value) || 10000;
+        let aggro = parseFloat(aggressionSlider.value) || 0.45;
+        if (min >= max) max = min + 0.25;
+        if (fair <= 0) fair = (min+max)/2;
+
+        const rawSpread = computeSpread(min, max);
+        let levels = getLevelsFromSpread(rawSpread);
+        // override if microCluster? we keep same levels but cluster more aggressively near min. handled by weights.
+        // spread display
+        spreadPercentSpan.innerText = rawSpread.toFixed(2) + '%';
+        spreadBadge.innerText = `spread: ${rawSpread.toFixed(1)}% · ${levels} levels`;
+        levelCountSpan.innerText = levels;
+        spreadIntelSpan.innerText = `spread ${rawSpread.toFixed(2)}% → ${levels} levels (adaptive)`;
+
+        // --- reserve logic based on aggro + liquidity shock---
+        let baseDryRatio = 0.5 - (aggro - 0.1) * (0.35 / 0.8); // 0.1→0.5, 0.9→0.15
+        if (liquidityShock) {
+            baseDryRatio = Math.min(0.6, baseDryRatio + 0.1); // +10% reserve
+        }
+        // micro cluster doesn't affect reserve directly
+        const dryCapital = capital * baseDryRatio;
+        const workingCapital = capital - dryCapital;
+        const reservePct = (dryCapital/capital*100).toFixed(1);
+        reservePercentSpan.innerText = reservePct + '%';
+        dynamicReserve.innerText = `💧 dry reserve: ${formatNumber(dryCapital,0)} ₵ (${reservePct}%)`;
+
+        // build price levels
+        const prices = [];
+        const step = (max - min) / (levels - 1);
+        for (let i = 0; i < levels; i++) {
+            prices.push(min + i * step);
+        }
+
+        // weights: if microCluster -> more convex, even more weight near min (lower index)
+        let p = 0.5 + (aggro - 0.1) * (2.0 / 0.8); // 0.1→0.5, 0.9→2.5
+        if (microCluster) {
+            p = p * 1.5; // boost convexity, cluster early
+        }
+        const rawWeights = [];
+        for (let i = 0; i < levels; i++) {
+            // reversed index? we want later slices heavier, but micro cluster wants first small, last not huge
+            // keep same logic: weight grows with i+1
+            rawWeights.push(Math.pow(i+1, p));
+        }
+        if (liquidityShock) {
+            // reduce highest level weight, increase mid-level density: shift weight from last to middle
+            if (levels > 2) {
+                let lastIdx = levels-1;
+                let midIdx = Math.floor(levels/2);
+                rawWeights[lastIdx] *= 0.7;   // reduce last
+                rawWeights[midIdx] *= 1.2;     // increase middle
+            }
+        }
+
+        const sumWeights = rawWeights.reduce((a,b)=>a+b,0);
+        const props = rawWeights.map(w=> w / sumWeights);
+        const sliceAmounts = props.map(p=> p * workingCapital);
+        // cumulative
+        let cumInvested = 0;
+        let ladder = [];
+        for (let i=0; i<levels; i++) {
+            cumInvested += sliceAmounts[i];
+            ladder.push({
+                price: prices[i],
+                amount: sliceAmounts[i],
+                cum: cumInvested,
+            });
+        }
+
+        // avg entry price (weighted avg price)
+        let totalQ = 0;
+        for (let i=0; i<levels; i++) {
+            totalQ += sliceAmounts[i] / prices[i];
+        }
+        const avgEntry = cumInvested / totalQ; // total usdt / total quantity
+        avgEntrySpan.innerText = formatNumber(avgEntry, 2);
+
+        // break even: price where total sell = invested (same as avg entry)
+        breakEvenSpan.innerText = formatNumber(avgEntry,2);
+
+        // roi if price returns to mid (midpoint between min & max)
+        const midPrice = (min+max)/2;
+        let portfolioValueAtMid = 0;
+        for (let i=0; i<levels; i++) {
+            portfolioValueAtMid += (sliceAmounts[i] / prices[i]) * midPrice;
+        }
+        const profit = portfolioValueAtMid - cumInvested;
+        const roi = (profit / cumInvested)*100;
+        roiMidSpan.innerText = (roi > 0 ? '+' : '') + roi.toFixed(2) + '%';
+
+        // premium vs fair
+        let totalPremiumPct = 0;
+        for (let i=0; i<levels; i++) {
+            const premium = ((prices[i] - fair) / fair) * 100;
+            totalPremiumPct += (sliceAmounts[i]/workingCapital) * premium;
+        }
+        avgPremiumSpan.innerText = (totalPremiumPct > 0 ? '+' : '') + totalPremiumPct.toFixed(2) + '%';
+
+        // capital efficiency score (0-100)
+        let score = 70; // base
+        // reserve too low penalize
+        if (baseDryRatio < 0.18) score -= 15;
+        else if (baseDryRatio > 0.45) score += 5; // high reserve good
+        // avg entry vs mid
+        if (avgEntry < midPrice) score += 10;
+        else score -= 5;
+        // spread realism
+        if (rawSpread > 5) score -= 5;
+        else if (rawSpread < 0.8) score += 8; // tight spread
+        // convexity check (avoid tail heavy)
+        const lastSlicePct = sliceAmounts[levels-1]/workingCapital;
+        if (lastSlicePct > 0.4) score -= 12;
+        if (microCluster) score += 5; // bonus for precision
+        score = Math.min(100, Math.max(0, score));
+        capitalEfficiencyNum.innerText = score + '/100';
+
+        // emotion guard
+        let emotionText = '';
+        if (baseDryRatio < 0.15) emotionText = '⚠️ HIGH EXPOSURE: reserve <15% · increase reserve';
+        else if (lastSlicePct > 0.4) emotionText = '⚠️ tail-heavy ladder: last slice >40% working capital';
+        else if (rawSpread < 0.5 && levels < 8) emotionText = 'ℹ️ spread tiny, increase levels manually?';
+        else emotionText = '✅ reserve healthy · allocation balanced';
+        emotionMsg.innerText = emotionText;
+
+        // render ladder
+        let html = '';
+        for (let i=0; i<levels; i++) {
+            const d = ladder[i];
+            const pctCapital = (d.amount / capital * 100).toFixed(1);
+            const premium = ((d.price - fair) / fair * 100).toFixed(2);
+            const premiumClass = premiumColor(parseFloat(premium));
+            html += `<tr ${i===0 ? 'class=highlight-slice' : ''}>
+                <td>${formatNumber(d.price,2)}</td>
+                <td>${pctCapital}%</td>
+                <td>${formatNumber(d.amount,1)}</td>
+                <td>${formatNumber(d.cum,1)}</td>
+                <td class="${premiumClass}">${premium}%</td>
+            </tr>`;
+        }
+        ladderBody.innerHTML = html;
+
+        // update premium preview cells
+        if (levels >= 1) {
+            premL1.innerText = formatNumber(prices[0],2);
+            color1.className = premiumColor(((prices[0]-fair)/fair*100));
+            color1.innerText = ((prices[0]-fair)/fair*100).toFixed(2)+'%';
+        }
+        if (levels >= 3) {
+            premL3.innerText = formatNumber(prices[2],2);
+            color3.className = premiumColor(((prices[2]-fair)/fair*100));
+            color3.innerText = ((prices[2]-fair)/fair*100).toFixed(2)+'%';
+        }
+        if (levels >= 5) {
+            premL5.innerText = formatNumber(prices[4],2);
+            color5.className = premiumColor(((prices[4]-fair)/fair*100));
+            color5.innerText = ((prices[4]-fair)/fair*100).toFixed(2)+'%';
+        }
+
+        // midpoint simulation text
+        midpointSimDiv.innerHTML = `📈 if price returns to ${formatNumber(midPrice,2)}: portfolio = ${formatNumber(portfolioValueAtMid,1)} ₵ · profit ${(profit>0?'+':'')}${formatNumber(profit,1)} (${roi.toFixed(2)}%) · break-even ${formatNumber(avgEntry,2)}`;
+
+        // update cluster / shock status
+        clusterStatus.innerText = microCluster ? 'active' : 'inactive';
+        shockStatus.innerText = liquidityShock ? 'ON' : 'off';
+
+        // update aggression display
+        aggroSpan.innerText = aggro.toFixed(2);
+    }
+
+    // save to localStorage
+    function saveSettings() {
+        const data = {
+            min: minInput.value,
+            max: maxInput.value,
+            fair: fairInput.value,
+            capital: capitalInput.value,
+            aggression: aggressionSlider.value,
+            micro: microCluster,
+            shock: liquidityShock,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // load from localStorage
+    function loadSettings() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const d = JSON.parse(saved);
+                minInput.value = d.min ?? 11.30;
+                maxInput.value = d.max ?? 11.55;
+                fairInput.value = d.fair ?? 11.40;
+                capitalInput.value = d.capital ?? 10000;
+                aggressionSlider.value = d.aggression ?? 0.45;
+                microCluster = d.micro ?? false;
+                liquidityShock = d.shock ?? false;
+                updateToggleUI();
+            } catch (e) {}
+        }
+    }
+
+    function updateToggleUI() {
+        microToggle.innerText = microCluster ? '🌀 micro-cluster ON' : '🌀 micro-cluster OFF';
+        microToggle.classList.toggle('active', microCluster);
+        shockToggle.innerText = liquidityShock ? '⚡ liquidity shock ON' : '⚡ liquidity shock OFF';
+        shockToggle.classList.toggle('active', liquidityShock);
+        if (liquidityShock) shockToggle.classList.add('warning-mode');
+        else shockToggle.classList.remove('warning-mode');
+    }
+
+    // event listeners
+    function refreshAndSave() {
+        computeEngine();
+        saveSettings();
+    }
+
+    minInput.addEventListener('input', refreshAndSave);
+    maxInput.addEventListener('input', refreshAndSave);
+    fairInput.addEventListener('input', refreshAndSave);
+    capitalInput.addEventListener('input', refreshAndSave);
+    aggressionSlider.addEventListener('input', ()=>{
+        aggroSpan.innerText = parseFloat(aggressionSlider.value).toFixed(2);
+        refreshAndSave();
+    });
+
+    microToggle.addEventListener('click', ()=>{
+        microCluster = !microCluster;
+        updateToggleUI();
+        refreshAndSave();
+    });
+    shockToggle.addEventListener('click', ()=>{
+        liquidityShock = !liquidityShock;
+        updateToggleUI();
+        refreshAndSave();
+    });
+
+    refreshBtn.addEventListener('click', refreshAndSave);
+    resetBtn.addEventListener('click', ()=>{
+        minInput.value = '11.30';
+        maxInput.value = '11.55';
+        fairInput.value = '11.40';
+        capitalInput.value = '10000';
+        aggressionSlider.value = '0.45';
+        microCluster = false;
+        liquidityShock = false;
+        updateToggleUI();
+        refreshAndSave();
+    });
+
+    // initial load and compute
+    loadSettings();
+    updateToggleUI();
+    computeEngine();
+})();
+</script>
+</body>
+</html>
