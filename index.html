@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 Abraham Adaptive P2P Engine v1 · Ghana USDT/GHS</title>
+    <title>🧠 Abraham Adaptive P2P v1 · manual levels input</title>
     <style>
         * {
             box-sizing: border-box;
@@ -345,6 +345,25 @@
             padding: 0.2rem 1rem;
             cursor: pointer;
         }
+        .levels-input {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: #141f3a;
+            border-radius: 3rem;
+            padding: 0.3rem 1.5rem 0.3rem 1rem;
+        }
+        .levels-input input {
+            width: 70px;
+            background: #0f1a30;
+            border: 1px solid #3c5a8f;
+            color: white;
+            border-radius: 2rem;
+            padding: 0.5rem 0.8rem;
+            text-align: center;
+            font-weight: 700;
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -352,9 +371,9 @@
     <div class="header">
         <div class="title">
             <h1>🧠 ABRAHAM ADAPTIVE P2P v1 · GHS</h1>
-            <div style="color:#aaccff;">USDT/GHS spread specialist · mark bought levels</div>
+            <div style="color:#aaccff;">USDT/GHS spread specialist · you set levels</div>
         </div>
-        <div class="badge" id="spreadBadge">spread: 2.1% · 7 levels</div>
+        <div class="badge" id="spreadBadge">spread: 2.1% · custom levels</div>
     </div>
 
     <!-- DASHBOARD -->
@@ -371,11 +390,14 @@
                 <div class="input-group" style="flex:2;"><span>capital ₵</span><input type="number" id="capital" step="100" value="10000"></div>
                 <div class="spread-metric" id="spreadPercent">2.21%</div>
             </div>
-            <!-- toggles -->
+            <!-- toggles + levels input -->
             <div class="toggle-row">
                 <span class="toggle-btn" id="microClusterToggle">🌀 micro-cluster OFF</span>
                 <span class="toggle-btn" id="liquidityShockToggle">⚡ liquidity shock OFF</span>
-                <span style="color:#aabbff;">aggression</span>
+                <div class="levels-input">
+                    <span style="font-weight:500;">🔢 levels</span>
+                    <input type="number" id="manualLevels" min="2" max="20" value="7" step="1">
+                </div>
             </div>
             <div class="slider-block">
                 <div class="slider-label"><span>⚖️ base aggression</span> <span id="aggroValue">0.45</span></div>
@@ -418,8 +440,8 @@
     <!-- LADDER + REBALANCE -->
     <div class="ladder-wrapper">
         <div style="display:flex; justify-content: space-between; margin-bottom:1rem;">
-            <span><span class="badge" style="background:#1f4172;">🧩 adaptive levels · <span id="levelCount">7</span> slices</span></span>
-            <span id="spreadIntelligence">spread 2.21% → 7 levels</span>
+            <span><span class="badge" style="background:#1f4172;">🧩 <span id="levelCount">7</span> slices (manual)</span></span>
+            <span id="spreadIntelligence">spread 2.21% → user defined levels</span>
         </div>
         <table class="ladder-table" id="ladderTable">
             <thead><tr><th>price (₵)</th><th>alloc %</th><th>amount (₵)</th><th>cumulative</th><th>premium</th><th>action / status</th></tr></thead>
@@ -472,6 +494,7 @@
     const resetBtn = document.getElementById('resetBtn');
     const midpointSimDiv = document.getElementById('midpointSim');
     const boughtCountSpan = document.getElementById('boughtCount');
+    const manualLevelsInput = document.getElementById('manualLevels');
 
     // premium color cells
     const premL1 = document.getElementById('premL1');
@@ -488,7 +511,7 @@
     // bought levels storage (set of indices)
     let boughtLevels = new Set(); // stores index (0-based)
 
-    // localStorage key
+    // localStorage keys
     const STORAGE_KEY = 'abrahamP2PEngineV1';
     const BOUGHT_KEY = 'abrahamBoughtLevels';
 
@@ -501,13 +524,6 @@
     // compute spread %
     function computeSpread(min, max) {
         return ((max - min) / min) * 100;
-    }
-
-    // determine levels based on spread
-    function getLevelsFromSpread(spreadPct) {
-        if (spreadPct < 1.0) return 9;
-        if (spreadPct >= 1.0 && spreadPct <= 3.0) return 7;
-        return 5;  // >5%
     }
 
     // premium color
@@ -553,16 +569,20 @@
         let fair = parseFloat(fairInput.value) || 11.40;
         let capital = parseFloat(capitalInput.value) || 10000;
         let aggro = parseFloat(aggressionSlider.value) || 0.45;
+        let manualLevels = parseInt(manualLevelsInput.value);
+        if (isNaN(manualLevels) || manualLevels < 2) manualLevels = 5;
+        if (manualLevels > 20) manualLevels = 20;
         if (min >= max) max = min + 0.25;
         if (fair <= 0) fair = (min+max)/2;
 
         const rawSpread = computeSpread(min, max);
-        let levels = getLevelsFromSpread(rawSpread);
+        let levels = manualLevels; // user defined
+
         // spread display
         spreadPercentSpan.innerText = rawSpread.toFixed(2) + '%';
-        spreadBadge.innerText = `spread: ${rawSpread.toFixed(1)}% · ${levels} levels`;
+        spreadBadge.innerText = `spread: ${rawSpread.toFixed(1)}% · ${levels} custom levels`;
         levelCountSpan.innerText = levels;
-        spreadIntelSpan.innerText = `spread ${rawSpread.toFixed(2)}% → ${levels} levels (adaptive)`;
+        spreadIntelSpan.innerText = `spread ${rawSpread.toFixed(2)}% → user defined (${levels})`;
 
         // --- reserve logic based on aggro + liquidity shock---
         let baseDryRatio = 0.5 - (aggro - 0.1) * (0.35 / 0.8); // 0.1→0.5, 0.9→0.15
@@ -654,7 +674,7 @@
         // avg entry vs mid
         if (avgEntry < midPrice) score += 10;
         else score -= 5;
-        // spread realism
+        // spread realism - now user defined levels, but we keep some checks
         if (rawSpread > 5) score -= 5;
         else if (rawSpread < 0.8) score += 8; // tight spread
         // convexity check (avoid tail heavy)
@@ -668,7 +688,7 @@
         let emotionText = '';
         if (baseDryRatio < 0.15) emotionText = '⚠️ HIGH EXPOSURE: reserve <15% · increase reserve';
         else if (lastSlicePct > 0.4) emotionText = '⚠️ tail-heavy ladder: last slice >40% working capital';
-        else if (rawSpread < 0.5 && levels < 8) emotionText = 'ℹ️ spread tiny, increase levels manually?';
+        else if (rawSpread < 0.5 && levels < 8) emotionText = 'ℹ️ spread tiny, consider more levels?';
         else emotionText = '✅ reserve healthy · allocation balanced';
         emotionMsg.innerText = emotionText;
 
@@ -684,7 +704,6 @@
             if (isBought) boughtCount++;
             const rowClass = isBought ? 'bought-row' : (i === 0 ? 'highlight-slice' : '');
             const statusText = isBought ? '✅ bought' : 'mark bought';
-            // price cell maybe strikethrough if bought (handled by css)
             html += `<tr class="${rowClass}" data-level-index="${i}">
                 <td>${formatNumber(d.price,2)}</td>
                 <td>${pctCapital}%</td>
@@ -744,6 +763,7 @@
             aggression: aggressionSlider.value,
             micro: microCluster,
             shock: liquidityShock,
+            manualLevels: manualLevelsInput.value,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
@@ -761,6 +781,7 @@
                 aggressionSlider.value = d.aggression ?? 0.45;
                 microCluster = d.micro ?? false;
                 liquidityShock = d.shock ?? false;
+                manualLevelsInput.value = d.manualLevels ?? 7;
                 updateToggleUI();
             } catch (e) {}
         }
@@ -791,6 +812,7 @@
         aggroSpan.innerText = parseFloat(aggressionSlider.value).toFixed(2);
         refreshAndSave();
     });
+    manualLevelsInput.addEventListener('input', refreshAndSave);
 
     microToggle.addEventListener('click', ()=>{
         microCluster = !microCluster;
@@ -810,6 +832,7 @@
         fairInput.value = '11.40';
         capitalInput.value = '10000';
         aggressionSlider.value = '0.45';
+        manualLevelsInput.value = '7';
         microCluster = false;
         liquidityShock = false;
         boughtLevels.clear();
